@@ -15,7 +15,7 @@ const Reviews = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/backend/reviews')
+    fetch('/backend/stats?type=reviews')
       .then(res => res.json())
       .then(data => {
         setReviews(data.reviews || []);

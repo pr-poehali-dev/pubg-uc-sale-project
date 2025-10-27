@@ -1,8 +1,8 @@
 '''
-Business: Получение статистики заказов UC
-Args: event - dict с httpMethod, queryStringParameters (period)
+Business: Получение статистики заказов UC и отзывов клиентов
+Args: event - dict с httpMethod, queryStringParameters (type: stats/reviews)
       context - object с request_id
-Returns: HTTP response со статистикой заказов
+Returns: HTTP response со статистикой или отзывами
 '''
 
 import json
@@ -38,6 +38,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
     
     try:
+        params = event.get('queryStringParameters', {}) or {}
+        data_type = params.get('type', 'stats')
+        
         database_url = os.environ.get('DATABASE_URL', '')
         
         if not database_url:
@@ -53,6 +56,39 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         conn = psycopg2.connect(database_url)
         cur = conn.cursor()
+        
+        if data_type == 'reviews':
+            cur.execute("""
+                SELECT id, customer_name, rating, comment, purchase_amount, created_at
+                FROM reviews
+                WHERE is_visible = true
+                ORDER BY created_at DESC
+                LIMIT 50
+            """)
+            
+            reviews = []
+            for row in cur.fetchall():
+                reviews.append({
+                    'id': row[0],
+                    'customer_name': row[1],
+                    'rating': row[2],
+                    'comment': row[3],
+                    'purchase_amount': row[4],
+                    'created_at': row[5].isoformat() if row[5] else None
+                })
+            
+            cur.close()
+            conn.close()
+            
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                },
+                'isBase64Encoded': False,
+                'body': json.dumps({'reviews': reviews})
+            }
         
         cur.execute("""
             SELECT 

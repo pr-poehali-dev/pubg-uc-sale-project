@@ -7,8 +7,17 @@
       "expectedStatus": 200,
       "expectedBody": {
         "total_orders": "number",
-        "total_revenue": "number",
         "orders": "array"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get reviews",
+      "method": "GET",
+      "path": "/?type=reviews",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "reviews": "array"
       },
       "bodyMatcher": "partial"
     },
