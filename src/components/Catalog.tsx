@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Icon from '@/components/ui/icon';
+import OrderDialog from './OrderDialog';
 
 const ucPackages = [
   { id: 1, amount: 60, price: 99, popular: false, bonus: '' },
@@ -13,6 +15,14 @@ const ucPackages = [
 ];
 
 const Catalog = () => {
+  const [selectedPackage, setSelectedPackage] = useState<typeof ucPackages[0] | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleBuyClick = (pkg: typeof ucPackages[0]) => {
+    setSelectedPackage(pkg);
+    setDialogOpen(true);
+  };
+
   return (
     <section id="catalog" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
@@ -65,6 +75,7 @@ const Catalog = () => {
                 <Button 
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                   size="lg"
+                  onClick={() => handleBuyClick(pkg)}
                 >
                   <Icon name="ShoppingCart" size={20} className="mr-2" />
                   Купить сейчас
@@ -74,6 +85,16 @@ const Catalog = () => {
           ))}
         </div>
       </div>
+
+      {selectedPackage && (
+        <OrderDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          ucAmount={selectedPackage.amount}
+          price={selectedPackage.price}
+          bonus={selectedPackage.bonus}
+        />
+      )}
     </section>
   );
 };

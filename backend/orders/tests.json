@@ -1,0 +1,43 @@
+{
+  "tests": [
+    {
+      "name": "Create order with valid data",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "playerId": "5123456789",
+        "playerName": "TestPlayer",
+        "contact": "@testuser",
+        "ucAmount": 660,
+        "price": 999,
+        "bonus": "+10 UC бонус"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "order_id": "string",
+        "message": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Reject order with missing fields",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "playerId": "5123456789"
+      },
+      "expectedStatus": 400,
+      "expectedBody": {
+        "error": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Handle OPTIONS for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200
+    }
+  ]
+}
