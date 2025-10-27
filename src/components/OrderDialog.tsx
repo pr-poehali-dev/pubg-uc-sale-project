@@ -25,6 +25,9 @@ const OrderDialog = ({ open, onOpenChange, ucAmount, price, bonus }: OrderDialog
   const [playerId, setPlayerId] = useState('');
   const [playerName, setPlayerName] = useState('');
   const [contact, setContact] = useState('');
+  const [promocode, setPromocode] = useState('');
+  const [discount, setDiscount] = useState(0);
+  const [finalPrice, setFinalPrice] = useState(price);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -55,6 +58,7 @@ const OrderDialog = ({ open, onOpenChange, ucAmount, price, bonus }: OrderDialog
           ucAmount,
           price,
           bonus: bonus || '',
+          promocode: promocode.toUpperCase(),
         }),
       });
 
@@ -69,6 +73,9 @@ const OrderDialog = ({ open, onOpenChange, ucAmount, price, bonus }: OrderDialog
         setPlayerId('');
         setPlayerName('');
         setContact('');
+        setPromocode('');
+        setDiscount(0);
+        setFinalPrice(price);
       } else {
         throw new Error(data.error || 'Ошибка создания заказа');
       }
@@ -134,11 +141,43 @@ const OrderDialog = ({ open, onOpenChange, ucAmount, price, bonus }: OrderDialog
               </p>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="promocode">Промокод (необязательно)</Label>
+              <Input
+                id="promocode"
+                placeholder="Введите промокод"
+                value={promocode}
+                onChange={(e) => setPromocode(e.target.value.toUpperCase())}
+              />
+              {discount > 0 && (
+                <p className="text-xs text-primary font-semibold">
+                  ✓ Скидка применена: -{discount} ₽
+                </p>
+              )}
+            </div>
+
             <div className="bg-muted/50 p-4 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-foreground/70">Сумма к оплате:</span>
-                <span className="text-2xl font-bold text-foreground">{price} ₽</span>
-              </div>
+              {discount > 0 ? (
+                <>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-foreground/70">Цена:</span>
+                    <span className="text-lg text-foreground/70 line-through">{price} ₽</span>
+                  </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-foreground/70">Скидка:</span>
+                    <span className="text-lg text-primary font-semibold">-{discount} ₽</span>
+                  </div>
+                  <div className="flex items-center justify-between mb-2 pt-2 border-t border-border">
+                    <span className="text-foreground font-semibold">К оплате:</span>
+                    <span className="text-2xl font-bold text-primary">{finalPrice} ₽</span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-foreground/70">Сумма к оплате:</span>
+                  <span className="text-2xl font-bold text-foreground">{price} ₽</span>
+                </div>
+              )}
               <div className="flex items-center gap-2 text-sm text-foreground/60">
                 <Icon name="Info" size={16} />
                 <span>Реквизиты придут после заполнения формы</span>

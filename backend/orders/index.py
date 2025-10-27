@@ -48,6 +48,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         uc_amount = body_data.get('ucAmount', 0)
         price = body_data.get('price', 0)
         bonus = body_data.get('bonus', '').strip()
+        promocode = body_data.get('promocode', '').strip().upper()
         
         if not all([player_id, player_name, contact, uc_amount, price]):
             return {
@@ -81,21 +82,65 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         order_time = datetime.now().strftime('%d.%m.%Y %H:%M')
         bonus_text = f' ({bonus})' if bonus else ''
         
+        discount_amount = 0
+        final_price = price
+        promo_season = ''
+        
+        if promocode and database_url:
+            conn = psycopg2.connect(database_url)
+            cur = conn.cursor()
+            
+            cur.execute("""
+                SELECT id, discount_percent, max_uses, used_count, season, active
+                FROM promocodes
+                WHERE code = %s
+            """, (promocode,))
+            
+            promo = cur.fetchone()
+            
+            if promo:
+                promo_id, discount_percent, max_uses, used_count, season, active = promo
+                
+                if active and used_count < max_uses:
+                    discount_amount = int(price * discount_percent / 100)
+                    final_price = price - discount_amount
+                    promo_season = season or ''
+                    
+                    cur.execute("""
+                        UPDATE promocodes SET used_count = used_count + 1
+                        WHERE id = %s
+                    """, (promo_id,))
+            
+            cur.close()
+            conn.close()
+        
         if database_url:
             conn = psycopg2.connect(database_url)
             cur = conn.cursor()
             cur.execute(
-                "INSERT INTO orders (order_id, player_id, player_name, contact, uc_amount, price, bonus, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                (order_id, player_id, player_name, contact, uc_amount, price, bonus, 'pending')
+                "INSERT INTO orders (order_id, player_id, player_name, contact, uc_amount, price, bonus, status, promocode, discount_amount, final_price) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                (order_id, player_id, player_name, contact, uc_amount, price, bonus, 'pending', promocode if promocode else None, discount_amount, final_price)
             )
+            
+            if promocode and discount_amount > 0:
+                cur.execute("""
+                    INSERT INTO promocode_usage (promocode_id, order_id)
+                    SELECT id, %s FROM promocodes WHERE code = %s
+                """, (order_id, promocode))
+            
             conn.commit()
             cur.close()
             conn.close()
         
+        promo_text = ''
+        if promocode and discount_amount > 0:
+            promo_text = f"\n🎁 Промокод: {promocode} ({promo_season})\n💸 Скидка: -{discount_amount} ₽"
+        
         message = f"""🎮 НОВЫЙ ЗАКАЗ UC
 
 📦 Пакет: {uc_amount} UC{bonus_text}
-💰 Сумма: {price} ₽
+💰 Цена: {price} ₽{promo_text}
+💵 К оплате: {final_price} ₽
 
 👤 Игрок:
 • Player ID: {player_id}
