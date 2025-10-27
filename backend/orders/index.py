@@ -11,6 +11,7 @@ from typing import Dict, Any
 import urllib.request
 import urllib.parse
 from datetime import datetime
+import psycopg2
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     method: str = event.get('httpMethod', 'GET')
@@ -74,8 +75,22 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'body': json.dumps({'error': 'Telegram не настроен'})
             }
         
+        database_url = os.environ.get('DATABASE_URL', '')
+        
+        order_id = context.request_id[:8]
         order_time = datetime.now().strftime('%d.%m.%Y %H:%M')
         bonus_text = f' ({bonus})' if bonus else ''
+        
+        if database_url:
+            conn = psycopg2.connect(database_url)
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO orders (order_id, player_id, player_name, contact, uc_amount, price, bonus, status) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                (order_id, player_id, player_name, contact, uc_amount, price, bonus, 'pending')
+            )
+            conn.commit()
+            cur.close()
+            conn.close()
         
         message = f"""🎮 НОВЫЙ ЗАКАЗ UC
 
@@ -88,7 +103,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
 • Контакт: {contact}
 
 ⏰ Время заказа: {order_time}
-🆔 ID заказа: {context.request_id[:8]}"""
+🆔 ID заказа: {order_id}"""
 
         if tbank_card:
             message += f"\n\n💳 Карта T-Bank: {tbank_card}"
@@ -121,7 +136,7 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             'isBase64Encoded': False,
             'body': json.dumps({
                 'success': True,
-                'order_id': context.request_id[:8],
+                'order_id': order_id,
                 'message': 'Заказ создан, реквизиты отправлены'
             })
         }
