@@ -6,12 +6,12 @@ import Icon from '@/components/ui/icon';
 import OrderDialog from './OrderDialog';
 
 const ucPackages = [
-  { id: 1, amount: 60, price: 99, popular: false, bonus: '' },
-  { id: 2, amount: 325, price: 499, popular: false, bonus: '' },
-  { id: 3, amount: 660, price: 999, popular: true, bonus: '+10 UC бонус' },
-  { id: 4, amount: 1800, price: 2499, popular: false, bonus: '+50 UC бонус' },
-  { id: 5, amount: 3850, price: 4999, popular: false, bonus: '+150 UC бонус' },
-  { id: 6, amount: 8100, price: 9999, popular: false, bonus: '+400 UC бонус' },
+  { id: 1, amount: 60, price: 90, popular: false, bonus: '' },
+  { id: 2, amount: 180, price: 190, popular: false, bonus: '' },
+  { id: 3, amount: 300, price: 400, popular: true, bonus: '+25 UC бонус' },
+  { id: 4, amount: 600, price: 840, popular: false, bonus: '+60 UC бонус' },
+  { id: 5, amount: 1200, price: 1700, popular: false, bonus: '+120 UC бонус' },
+  { id: 6, amount: 1500, price: 2200, popular: false, bonus: '+300 UC бонус' },
 ];
 
 const Catalog = () => {
